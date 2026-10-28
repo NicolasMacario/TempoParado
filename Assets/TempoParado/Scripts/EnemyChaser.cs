@@ -216,7 +216,7 @@ namespace TempoParado
         }
         public void Defeat()
         {
-            if (body != null) body.ClearTemporarySlow();
+            if (body != null) body.ClearTemporalEffects();
             CancelAttack();
             alerted = false;
             hitReactionRemaining = 0f;

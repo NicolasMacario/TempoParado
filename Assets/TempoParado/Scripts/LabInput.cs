@@ -8,6 +8,19 @@ namespace TempoParado
     // Adaptador provisório: suporta os dois sistemas sem exigir trocar Player Settings.
     public static class LabInput
     {
+        public static bool PulsePressed
+        {
+            get
+            {
+#if ENABLE_INPUT_SYSTEM
+                return Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame;
+#elif ENABLE_LEGACY_INPUT_MANAGER
+                return Input.GetKeyDown(KeyCode.Q);
+#else
+                return false;
+#endif
+            }
+        }
         public static bool AttackPressed
         {
             get

@@ -20,7 +20,8 @@ namespace TempoParado
             float width = Mathf.Min(310f, Screen.width - 24f);
             float x = Mathf.Max(12f, Screen.width - width - 12f);
             bool slowed = clock != null && clock.HasTemporarySlow;
-            float height = (health == null ? 176f : 226f) + (slowed ? 28f : 0f);
+            bool normalized = clock != null && clock.HasNormalization;
+            float height = (health == null ? 176f : 226f) + (slowed ? 28f : 0f) + (normalized ? 28f : 0f);
             GUI.Box(new Rect(x, 12f, width, height), "ZELADOR | perseguicao e ataque");
             GUI.Label(new Rect(x + 12f, 40f, width - 24f, 24f), "Estado: " + enemy.StateLabel);
             GUI.Label(new Rect(x + 12f, 65f, width - 24f, 24f), "Ritmo local: " + enemy.LocalScale.ToString("0.0") + "x");
@@ -38,9 +39,16 @@ namespace TempoParado
                     GUI.DrawTexture(new Rect(x + 12f, 211f, (width - 24f) * health.CurrentHealth / Mathf.Max(1, health.maxHealth), 12f), Texture2D.whiteTexture);
                 GUI.color = original;
             }
+            float effectY = health == null ? 180f : 236f;
             if (slowed)
-                GUI.Label(new Rect(x + 12f, health == null ? 180f : 236f, width - 24f, 24f),
+            {
+                GUI.Label(new Rect(x + 12f, effectY, width - 24f, 24f),
                     "Efeito temporal: " + clock.TemporarySlowRemaining.ToString("0.0") + "s reais");
+                effectY += 28f;
+            }
+            if (normalized)
+                GUI.Label(new Rect(x + 12f, effectY, width - 24f, 24f),
+                    "Pulso ativo: " + clock.NormalizationRemaining.ToString("0.0") + "s reais");
         }
     }
 }
