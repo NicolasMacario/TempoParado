@@ -14,12 +14,12 @@ namespace TempoParado
         [Min(0.1f)] public float collapseDuration = 2f;
         [Range(0f, 0.95f)] public float postCollapseMagnitude = 0.4f;
         [Header("Condicao lenta: multiplicadores leve / medio / critico")]
-        public Vector3 slowDamageTaken = new Vector3(0.9f, 0.8f, 0.65f);
-        public Vector3 slowAttackSpeed = new Vector3(1f, 0.85f, 0.65f);
-        public Vector3 slowDodgeDistance = new Vector3(1f, 0.85f, 0.65f);
+        public Vector3 slowDamageTaken = new Vector3(0.8f, 0.65f, 0.5f);
+        public Vector3 slowAttackSpeed = new Vector3(1f, 0.7f, 0.45f);
+        public Vector3 slowDodgeDistance = new Vector3(1f, 0.7f, 0.45f);
         [Header("Condicao acelerada: multiplicadores leve / medio / critico")]
-        public Vector3 fastMovement = new Vector3(1.1f, 1.2f, 1.35f);
-        public Vector3 fastAttackSpeed = new Vector3(1.1f, 1.2f, 1.35f);
+        public Vector3 fastMovement = new Vector3(1.2f, 1.45f, 1.75f);
+        public Vector3 fastAttackSpeed = new Vector3(1.2f, 1.45f, 1.75f);
         public Vector3 fastMaxHealth = new Vector3(1f, 0.9f, 0.75f);
         public float Value { get; private set; }
         public float CollapseRemaining { get; private set; }
@@ -27,6 +27,9 @@ namespace TempoParado
         private float collapseSide;
         private TimeBody body;
         private PlayerHealth health;
+        private PlayerMotor motor;
+        private PlayerCombat combat;
+        private PlayerDodge dodge;
 
         // O ambiente altera a barra; o estado da barra determina os efeitos.
         private int ConditionSide
@@ -57,7 +60,31 @@ namespace TempoParado
         public float DamageTakenMultiplier => ConditionSide < 0 ? Multiplier(slowDamageTaken, 0.1f, 3f) : 1f;
         public float MaxHealthMultiplier => ConditionSide > 0 ? Multiplier(fastMaxHealth, 0.1f, 1f) : 1f;
 
-        private void Awake() { body = GetComponent<TimeBody>(); health = GetComponent<PlayerHealth>(); }
+        private void Awake()
+        {
+            body = GetComponent<TimeBody>();
+            health = GetComponent<PlayerHealth>();
+            motor = GetComponent<PlayerMotor>();
+            combat = GetComponent<PlayerCombat>();
+            dodge = GetComponent<PlayerDodge>();
+        }
+        public void ApplyNoticeableBalance()
+        {
+            slowDamageTaken = new Vector3(0.8f, 0.65f, 0.5f);
+            slowAttackSpeed = new Vector3(1f, 0.7f, 0.45f);
+            slowDodgeDistance = new Vector3(1f, 0.7f, 0.45f);
+            fastMovement = new Vector3(1.2f, 1.45f, 1.75f);
+            fastAttackSpeed = new Vector3(1.2f, 1.45f, 1.75f);
+            fastMaxHealth = new Vector3(1f, 0.9f, 0.75f);
+        }
+        public bool SetConditionForTesting(float value)
+        {
+            if (!Application.isPlaying || !isActiveAndEnabled || health == null || health.IsDead) return false;
+            Value = Mathf.Clamp(value, -0.95f, 0.95f);
+            CollapseRemaining = 0f;
+            collapseSide = 0f;
+            return true;
+        }
         private void Update()
         {
             if (LabReset.Requested || health.IsDead) { ResetState(); return; }
@@ -94,42 +121,66 @@ namespace TempoParado
                     magnitude < 0.35f ? "LEVE" : magnitude < 0.7f ? "MEDIO" : "CRITICO";
             }
         }
+        private static void EffectLine(Rect rect, string label, float multiplier, bool lowerIsBetter)
+        {
+            Color original = GUI.color;
+            int percent = Mathf.RoundToInt((multiplier - 1f) * 100f);
+            bool beneficial = lowerIsBetter ? multiplier < 1f : multiplier > 1f;
+            GUI.color = percent == 0 ? Color.white : beneficial ? new Color(0.4f, 1f, 0.5f) : new Color(1f, 0.5f, 0.4f);
+            GUI.Label(rect, label + ": " + (percent > 0 ? "+" : "") + percent + "%");
+            GUI.color = original;
+        }
         private void OnGUI()
         {
             if (health == null || health.IsDead || body == null) return;
-            float width = Mathf.Min(330f, Screen.width - 24f);
-            float x = Screen.width - width - 12f;
-            GUI.Box(new Rect(x, 388f, width, 190f), "DESGASTE TEMPORAL | " + StageLabel);
+            float width = Mathf.Min(400f, Screen.width - 24f);
+            float x = (Screen.width - width) * 0.5f;
+            float y = Mathf.Max(12f, Screen.height - 304f);
+            string condition = ConditionSide == 0 ? "EQUILIBRIO" : ConditionSide < 0 ? "LENTA" : "ACELERADA";
+            GUI.Box(new Rect(x, y, width, 224f), "CONDICAO TEMPORAL: " + condition + " | " + StageLabel);
             float environment = body.EnvironmentTimeScale;
             string region = environment <= 0f ? "Parado" : Mathf.Approximately(environment, 1f) ? "Normal" : environment < 1f ? "Lento" : "Rapido";
-            string value = Mathf.Abs(Value) < 0.005f ? "0%" : (Value < 0f ? "-" : "+") + (Mathf.Abs(Value) * 100f).ToString("0") + "%";
-            GUI.Label(new Rect(x + 12f, 416f, width - 24f, 24f), "Ambiente: " + region + " | Desgaste: " + value);
+            GUI.Label(new Rect(x + 12f, y + 26f, width - 24f, 24f),
+                "Ambiente: " + region + " | Barra: " + (Value * 100f).ToString("0") + "%");
             float left = x + 16f;
             float barWidth = width - 32f;
             Color original = GUI.color;
             GUI.color = new Color(0.15f, 0.4f, 0.8f);
-            GUI.DrawTexture(new Rect(left, 448f, barWidth * 0.5f, 12f), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(left, y + 54f, barWidth * 0.5f, 10f), Texture2D.whiteTexture);
             GUI.color = new Color(0.95f, 0.45f, 0.1f);
-            GUI.DrawTexture(new Rect(left + barWidth * 0.5f, 448f, barWidth * 0.5f, 12f), Texture2D.whiteTexture);
-            GUI.color = Color.black;
-            GUI.DrawTexture(new Rect(left + barWidth * 0.5f - 1f, 446f, 2f, 16f), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(left + barWidth * 0.5f, y + 54f, barWidth * 0.5f, 10f), Texture2D.whiteTexture);
             GUI.color = Color.white;
             float marker = left + (Value + 1f) * 0.5f * (barWidth - 4f);
-            GUI.DrawTexture(new Rect(marker, 444f, 4f, 20f), Texture2D.whiteTexture);
+            GUI.DrawTexture(new Rect(marker, y + 51f, 4f, 16f), Texture2D.whiteTexture);
             GUI.color = original;
-            GUI.Label(new Rect(left, 468f, 80f, 22f), "LENTO");
-            GUI.Label(new Rect(left + barWidth * 0.5f - 35f, 468f, 90f, 22f), "EQUILIBRIO");
-            GUI.Label(new Rect(left + barWidth - 80f, 468f, 85f, 22f), "ACELERADO");
-            string effects = ConditionSide < 0 ?
-                "Dano recebido: x" + DamageTakenMultiplier.ToString("0.00") +
-                "\nVel. ataque: x" + AttackSpeedMultiplier.ToString("0.00") +
-                " | Esquiva: x" + DodgeDistanceMultiplier.ToString("0.00") : ConditionSide > 0 ?
-                "Caminhada: x" + MovementMultiplier.ToString("0.00") +
-                " | Ataque: x" + AttackSpeedMultiplier.ToString("0.00") +
-                "\nVida maxima: x" + MaxHealthMultiplier.ToString("0.00") : "Equilibrio: sem buffs ou debuffs";
-            GUI.Label(new Rect(x + 12f, 494f, width - 24f, 48f), effects);
-            string condition = ConditionSide == 0 ? "Equilibrada" : ConditionSide < 0 ? "Lenta" : "Acelerada";
-            GUI.Label(new Rect(x + 12f, 546f, width - 24f, 25f), "Condicao temporal: " + condition);
+            float baseSpeed = motor == null ? 0f : Mathf.Max(0f, motor.speed);
+            float baseDistance = dodge == null ? 0f : Mathf.Max(0.1f, dodge.distance);
+            if (ConditionSide < 0)
+            {
+                EffectLine(new Rect(left, y + 74f, barWidth, 24f), "Dano recebido", DamageTakenMultiplier, true);
+                EffectLine(new Rect(left, y + 100f, barWidth, 24f), "Velocidade dos ataques", AttackSpeedMultiplier, false);
+                EffectLine(new Rect(left, y + 126f, barWidth, 24f), "Distancia da esquiva", DodgeDistanceMultiplier, false);
+            }
+            else if (ConditionSide > 0)
+            {
+                EffectLine(new Rect(left, y + 74f, barWidth, 24f), "Velocidade da caminhada", MovementMultiplier, false);
+                EffectLine(new Rect(left, y + 100f, barWidth, 24f), "Velocidade dos ataques", AttackSpeedMultiplier, false);
+                EffectLine(new Rect(left, y + 126f, barWidth, 24f), "Vida maxima", MaxHealthMultiplier, false);
+            }
+            else
+            {
+                GUI.Label(new Rect(left, y + 74f, barWidth, 24f), "Sem buffs ou debuffs ativos.");
+                GUI.Label(new Rect(left, y + 100f, barWidth, 24f), "Leve: bonus | Medio / Critico: bonus e penalidades");
+                GUI.Label(new Rect(left, y + 126f, barWidth, 24f), "Os efeitos seguem a barra, mesmo fora das zonas.");
+            }
+            GUI.Label(new Rect(left, y + 156f, barWidth, 24f),
+                "Caminhada: " + (baseSpeed * MovementMultiplier).ToString("0.00") +
+                " m/s | Esquiva: " + (baseDistance * DodgeDistanceMultiplier).ToString("0.00") + " m");
+            float attackDuration = combat == null ? 0f :
+                (Mathf.Max(0.05f, combat.windupDuration) + Mathf.Max(0.05f, combat.impactDuration) +
+                 Mathf.Max(0.05f, combat.recoveryDuration)) / AttackSpeedMultiplier;
+            GUI.Label(new Rect(left, y + 182f, barWidth, 30f),
+                "Proximo ataque ~" + attackDuration.ToString("0.00") + "s | Vida: " + health.CurrentHealth + "/" + health.EffectiveMaxHealth);
             if (IsCollapsed)
             {
                 float overlayWidth = Mathf.Min(440f, Screen.width - 24f);
