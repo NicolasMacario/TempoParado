@@ -34,14 +34,11 @@ namespace TempoParado
         private void OnDisable() { ClearTemporalEffects(); }
         // Usado por objetos carregados: apenas o jogador e fonte, evitando ciclos.
         public void FollowClock(TimeBody owner) { clockOwner = owner == this ? null : owner; }
-        // Calculado ao consultar, evitando dependencia da ordem de Update.
-        private float BaseTimeScale
+        // Ritmo do ambiente, sem imunidade pessoal, heranca ou efeitos temporarios.
+        public float EnvironmentTimeScale
         {
             get
             {
-                if (clockOwner != null) return clockOwner.LocalTimeScale;
-                if (HasNormalization) return 1f;
-                if (ignoreZones) return 1f;
                 TimeZone selected = null;
                 foreach (TimeZone zone in TimeZone.Active)
                 {
@@ -50,6 +47,17 @@ namespace TempoParado
                         selected = zone;
                 }
                 return Mathf.Max(0f, selected == null ? defaultScale : selected.scale);
+            }
+        }
+        // Calculado ao consultar, evitando dependencia da ordem de Update.
+        private float BaseTimeScale
+        {
+            get
+            {
+                if (clockOwner != null) return clockOwner.LocalTimeScale;
+                if (HasNormalization) return 1f;
+                if (ignoreZones) return 1f;
+                return EnvironmentTimeScale;
             }
         }
         public float LocalTimeScale => HasTemporarySlow ? Mathf.Min(BaseTimeScale, temporaryCap) : BaseTimeScale;

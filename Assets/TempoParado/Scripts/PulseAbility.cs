@@ -23,6 +23,7 @@ namespace TempoParado
         private TimeBody body;
         private PlayerHealth health;
         private PlayerDodge dodge;
+        private TemporalStrain strain;
         private CharacterController controller;
         private GameObject wave;
         private LineRenderer waveLine;
@@ -39,6 +40,7 @@ namespace TempoParado
             body = GetComponent<TimeBody>();
             health = GetComponent<PlayerHealth>();
             dodge = GetComponent<PlayerDodge>();
+            strain = GetComponent<TemporalStrain>();
             controller = GetComponent<CharacterController>();
             if (pulseMaterial != null)
             {
@@ -58,6 +60,11 @@ namespace TempoParado
             if (!LabInput.PulsePressed) return;
             if (!Application.isFocused || Cursor.lockState != CursorLockMode.Locked || LabInput.ReleaseCameraPressed) return;
             if (dt <= 0f) { LastResult = "Voce esta congelado. I: recuperar protecao"; return; }
+            if (strain != null && strain.isActiveAndEnabled && strain.IsCollapsed)
+            {
+                LastResult = "Colapso temporal: aguarde";
+                return;
+            }
             if (dodge != null && dodge.isActiveAndEnabled && dodge.IsDodging)
             {
                 LastResult = "Espere a esquiva terminar";
@@ -181,7 +188,8 @@ namespace TempoParado
         private void OnGUI()
         {
             if (health == null || health.IsDead) return;
-            string state = CooldownRemaining > 0f ? "RECARGA: " + CooldownRemaining.ToString("0.0") + "s" : "PRONTO";
+            string state = strain != null && strain.isActiveAndEnabled && strain.IsCollapsed ? "COLAPSO" :
+                CooldownRemaining > 0f ? "RECARGA: " + CooldownRemaining.ToString("0.0") + "s" : "PRONTO";
             float width = Mathf.Min(330f, Screen.width - 24f);
             float x = Screen.width - width - 12f;
             GUI.Box(new Rect(x, 310f, width, 66f), "Q: PULSO | " + state);

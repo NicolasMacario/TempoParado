@@ -17,6 +17,7 @@ namespace TempoParado
         private PlayerHealth health;
         private PlayerDodge dodge;
         private PlayerCombat combat;
+        private TemporalStrain strain;
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
@@ -25,6 +26,7 @@ namespace TempoParado
             health = GetComponent<PlayerHealth>();
             dodge = GetComponent<PlayerDodge>();
             combat = GetComponent<PlayerCombat>();
+            strain = GetComponent<TemporalStrain>();
             if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
         }
         private void Update()
@@ -49,6 +51,17 @@ namespace TempoParado
                 return;
             }
             float dt = body.DeltaTime;
+            if (strain != null && strain.isActiveAndEnabled && strain.IsCollapsed)
+            {
+                if (dodge != null && dodge.isActiveAndEnabled)
+                {
+                    dodge.InterruptDodge();
+                    dodge.Step(dt, Vector3.zero, false); // A recarga continua sem dar invulnerabilidade.
+                }
+                if (combat != null) combat.InterruptAttack("Ataque interrompido pelo colapso");
+                MoveWithGravity(Vector3.zero, dt);
+                return;
+            }
             Vector2 input = LabInput.Move;
             Vector3 move = new Vector3(input.x, 0f, input.y);
             if (cameraTransform != null)
@@ -84,6 +97,11 @@ namespace TempoParado
             if (facing.sqrMagnitude > 0.001f)
                 transform.rotation = Quaternion.RotateTowards(transform.rotation,
                     Quaternion.LookRotation(facing), turnSpeed * dt);
+            MoveWithGravity(displacement, dt);
+        }
+        private void MoveWithGravity(Vector3 displacement, float dt)
+        {
+            if (dt <= 0f) return;
             if (controller.isGrounded && velocityY < 0f) velocityY = -2f;
             velocityY += -20f * dt;
             controller.Move(displacement + Vector3.up * velocityY * dt);

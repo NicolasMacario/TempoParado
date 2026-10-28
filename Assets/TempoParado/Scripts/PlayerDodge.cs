@@ -23,6 +23,7 @@ namespace TempoParado
         private float currentInvulnerability;
         private float currentSpeed;
         private PlayerHealth health;
+        private TemporalStrain strain;
         private Renderer[] renderers;
         private MaterialPropertyBlock[] originalBlocks;
         private MaterialPropertyBlock[] feedbackBlocks;
@@ -31,6 +32,7 @@ namespace TempoParado
         private void Awake()
         {
             health = GetComponent<PlayerHealth>();
+            strain = GetComponent<TemporalStrain>();
             renderers = GetComponentsInChildren<Renderer>(true);
             originalBlocks = new MaterialPropertyBlock[renderers.Length];
             feedbackBlocks = new MaterialPropertyBlock[renderers.Length];
@@ -75,9 +77,13 @@ namespace TempoParado
         }
         public void ResetState()
         {
+            InterruptDodge();
+            CooldownRemaining = 0f;
+        }
+        public void InterruptDodge()
+        {
             remaining = 0f;
             elapsed = 0f;
-            CooldownRemaining = 0f;
             IsDodging = false;
             IsInvulnerable = false;
             FaceDirection = false;
@@ -110,7 +116,8 @@ namespace TempoParado
         private void OnGUI()
         {
             if (health != null && health.IsDead) return;
-            string state = IsInvulnerable ? "INVULNERAVEL" : IsDodging ? "ESQUIVANDO (vulneravel)" :
+            string state = strain != null && strain.isActiveAndEnabled && strain.IsCollapsed ? "COLAPSO" :
+                IsInvulnerable ? "INVULNERAVEL" : IsDodging ? "ESQUIVANDO (vulneravel)" :
                 CooldownRemaining > 0f ? "RECARGA: " + CooldownRemaining.ToString("0.0") + "s" : "PRONTA";
             GUI.Box(new Rect(12f, 284f, 300f, 64f), "ESPACO: ESQUIVA | " + state);
             GUI.Label(new Rect(24f, 315f, 276f, 25f), "WASD + Espaco: direcao | Parado: para tras");

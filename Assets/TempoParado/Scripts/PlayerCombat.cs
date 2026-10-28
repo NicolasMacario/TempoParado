@@ -27,12 +27,14 @@ namespace TempoParado
         private bool initialized;
         private PlayerInteractor interactor;
         private PlayerHealth health;
+        private TemporalStrain strain;
         private readonly HashSet<EnemyHealth> struck = new HashSet<EnemyHealth>();
 
         private void Awake()
         {
             interactor = GetComponent<PlayerInteractor>();
             health = GetComponent<PlayerHealth>();
+            strain = GetComponent<TemporalStrain>();
             restRotation = weaponPivot == null ? Quaternion.identity : weaponPivot.localRotation;
             initialized = true;
         }
@@ -141,11 +143,17 @@ namespace TempoParado
             if (initialized && weaponPivot != null) weaponPivot.localRotation = restRotation;
         }
         public void ResetState() { CancelAttack(); LastResult = "Nenhum golpe ainda"; }
+        public void InterruptAttack(string reason)
+        {
+            if (IsAttacking) LastResult = reason;
+            CancelAttack();
+        }
         private void OnDisable() { CancelAttack(); }
         private void OnGUI()
         {
             if (health != null && health.IsDead) return;
-            string state = phase == Phase.Idle ? "PRONTO" : phase == Phase.Windup ? "PREPARANDO" : phase == Phase.Impact ? "GOLPE" : "RECUPERANDO";
+            string state = strain != null && strain.isActiveAndEnabled && strain.IsCollapsed ? "COLAPSO" :
+                phase == Phase.Idle ? "PRONTO" : phase == Phase.Windup ? "PREPARANDO" : phase == Phase.Impact ? "GOLPE" : "RECUPERANDO";
             GUI.Box(new Rect(12f, 360f, 330f, 66f), "BOTAO ESQUERDO: ATAQUE | " + state);
             GUI.Label(new Rect(24f, 392f, 306f, 25f), LastResult);
         }

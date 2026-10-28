@@ -15,12 +15,14 @@ namespace TempoParado
         private PlayerHealth health;
         private PlayerDodge dodge;
         private PlayerCombat combat;
+        private TemporalStrain strain;
         private void Awake()
         {
             body = GetComponent<TimeBody>();
             health = GetComponent<PlayerHealth>();
             dodge = GetComponent<PlayerDodge>();
             combat = GetComponent<PlayerCombat>();
+            strain = GetComponent<TemporalStrain>();
         }
         private void Update()
         {
@@ -33,6 +35,12 @@ namespace TempoParado
                 return;
             }
             if (health != null && health.IsDead) { nearby = null; return; }
+            if (strain != null && strain.isActiveAndEnabled && strain.IsCollapsed)
+            {
+                nearby = null;
+                messageUntil = 0f;
+                return;
+            }
             if (dodge != null && dodge.isActiveAndEnabled && dodge.IsDodging)
             {
                 nearby = null;
@@ -104,6 +112,7 @@ namespace TempoParado
         private void OnGUI()
         {
             if (health != null && health.IsDead) return;
+            if (strain != null && strain.isActiveAndEnabled && strain.IsCollapsed) return;
             string text;
             if (Time.unscaledTime < messageUntil) text = message;
             else if (HeldItem != null) text = "E: soltar " + HeldItem.displayName + " | Ritmo do objeto: " + HeldItem.Body.LocalTimeScale.ToString("0.0") + "x";
