@@ -36,6 +36,8 @@ namespace TempoParado
         private AttackTelegraph telegraph;
         private EnemyHealth enemyHealth;
         private float hitReactionRemaining;
+        private PlayerDodge targetDodge;
+        private PerfectDodge targetPerfectDodge;
 
         private void Awake()
         {
@@ -46,6 +48,8 @@ namespace TempoParado
             targetHealth = target == null ? null : target.GetComponent<PlayerHealth>();
             telegraph = GetComponent<AttackTelegraph>();
             enemyHealth = GetComponent<EnemyHealth>();
+            targetDodge = target == null ? null : target.GetComponent<PlayerDodge>();
+            targetPerfectDodge = target == null ? null : target.GetComponent<PerfectDodge>();
         }
         private void Update()
         {
@@ -143,6 +147,13 @@ namespace TempoParado
         }
         private void TryHit()
         {
+            // Reconhece o ponto de onde o jogador escapou, apenas na janela ciano.
+            if (targetHealth.IsInvulnerable && targetDodge != null && targetPerfectDodge != null &&
+                CanStrikePosition(targetDodge.DodgeStartPosition) && targetPerfectDodge.TryTrigger(this))
+            {
+                LastAttackLabel = "Esquiva perfeita!";
+                return;
+            }
             Vector3 offset = target.position - transform.position;
             float verticalDistance = Mathf.Abs(offset.y);
             offset.y = 0f;
@@ -159,13 +170,30 @@ namespace TempoParado
                 return;
             }
             if (!HasClearHitPath()) { LastAttackLabel = "Bloqueado por obstaculo"; return; }
+            if (targetHealth.IsInvulnerable && targetPerfectDodge != null && targetPerfectDodge.TryTrigger(this))
+            {
+                LastAttackLabel = "Esquiva perfeita!";
+                return;
+            }
             LastAttackLabel = targetHealth.TakeDamage(attackDamage) ? "Acertou: -" + attackDamage + " de vida" :
                 targetHealth.IsInvulnerable ? "Esquiva: sem dano" : "Sem dano";
         }
-        private bool HasClearHitPath()
+        private bool CanStrikePosition(Vector3 position)
+        {
+            Vector3 offset = position - transform.position;
+            if (Mathf.Abs(offset.y) > 1.5f) return false;
+            offset.y = 0f;
+            float distance = offset.magnitude;
+            if (distance > attackRange) return false;
+            if (distance > 0.001f && Vector3.Dot(transform.forward, offset / distance) <
+                Mathf.Cos(attackArc * 0.5f * Mathf.Deg2Rad)) return false;
+            return HasClearHitPath(position);
+        }
+        private bool HasClearHitPath() { return HasClearHitPath(target.position); }
+        private bool HasClearHitPath(Vector3 position)
         {
             Vector3 start = transform.position + Vector3.up * 0.25f;
-            Vector3 offset = target.position + Vector3.up * 0.25f - start;
+            Vector3 offset = position + Vector3.up * 0.25f - start;
             if (offset.sqrMagnitude < 0.0001f) return true;
             foreach (RaycastHit hit in Physics.RaycastAll(start, offset.normalized, offset.magnitude, ~0, QueryTriggerInteraction.Ignore))
             {
@@ -188,6 +216,7 @@ namespace TempoParado
         }
         public void Defeat()
         {
+            if (body != null) body.ClearTemporarySlow();
             CancelAttack();
             alerted = false;
             hitReactionRemaining = 0f;

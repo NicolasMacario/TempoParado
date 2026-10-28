@@ -15,6 +15,8 @@ namespace TempoParado
         public bool FaceDirection { get; private set; }
         public Vector3 Direction { get; private set; }
         public float CooldownRemaining { get; private set; }
+        public int DodgeSequence { get; private set; }
+        public Vector3 DodgeStartPosition { get; private set; }
         private float remaining;
         private float elapsed;
         private float currentDuration;
@@ -49,6 +51,8 @@ namespace TempoParado
             CooldownRemaining = Mathf.Max(0f, CooldownRemaining - dt);
             if (requested && remaining <= 0f && CooldownRemaining <= 0f)
             {
+                DodgeSequence++;
+                DodgeStartPosition = transform.position;
                 FaceDirection = moveDirection.sqrMagnitude > 0.001f;
                 Direction = FaceDirection ? moveDirection.normalized : -transform.forward;
                 Direction = new Vector3(Direction.x, 0f, Direction.z).normalized;

@@ -7,13 +7,21 @@ namespace TempoParado
     {
         private EnemyChaser enemy;
         private EnemyHealth health;
-        private void Awake() { enemy = GetComponent<EnemyChaser>(); health = GetComponent<EnemyHealth>(); }
+        private TimeBody clock;
+        private void Awake()
+        {
+            enemy = GetComponent<EnemyChaser>();
+            health = GetComponent<EnemyHealth>();
+            clock = GetComponent<TimeBody>();
+        }
         private void OnGUI()
         {
             if (enemy == null) return;
             float width = Mathf.Min(310f, Screen.width - 24f);
             float x = Mathf.Max(12f, Screen.width - width - 12f);
-            GUI.Box(new Rect(x, 12f, width, health == null ? 176f : 226f), "ZELADOR | perseguicao e ataque");
+            bool slowed = clock != null && clock.HasTemporarySlow;
+            float height = (health == null ? 176f : 226f) + (slowed ? 28f : 0f);
+            GUI.Box(new Rect(x, 12f, width, height), "ZELADOR | perseguicao e ataque");
             GUI.Label(new Rect(x + 12f, 40f, width - 24f, 24f), "Estado: " + enemy.StateLabel);
             GUI.Label(new Rect(x + 12f, 65f, width - 24f, 24f), "Ritmo local: " + enemy.LocalScale.ToString("0.0") + "x");
             GUI.Label(new Rect(x + 12f, 90f, width - 24f, 24f), enemy.LastAttackLabel);
@@ -30,6 +38,9 @@ namespace TempoParado
                     GUI.DrawTexture(new Rect(x + 12f, 211f, (width - 24f) * health.CurrentHealth / Mathf.Max(1, health.maxHealth), 12f), Texture2D.whiteTexture);
                 GUI.color = original;
             }
+            if (slowed)
+                GUI.Label(new Rect(x + 12f, health == null ? 180f : 236f, width - 24f, 24f),
+                    "Efeito temporal: " + clock.TemporarySlowRemaining.ToString("0.0") + "s reais");
         }
     }
 }
