@@ -1743,6 +1743,7 @@ GameObject:
   - component: {fileID: 1110657268}
   - component: {fileID: 1110657269}
   - component: {fileID: 1110657270}
+  - component: {fileID: 1110657271}
   m_Layer: 0
   m_Name: Jogador
   m_TagString: Untagged
@@ -1900,6 +1901,22 @@ MonoBehaviour:
   enemyTimeCap: 0.1
   slowDuration: 0.5
   ringMaterial: {fileID: 2100000, guid: 48a5eb47e30ef1e4ab59b87a510d8c6d, type: 2}
+--- !u!114 &1110657271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1110657261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce5c480bfdfc4e9e9c0bb271da3cb441, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TempoParado.PulseAbility
+  range: 5
+  effectDuration: 2
+  cooldown: 4
+  pulseMaterial: {fileID: 2100000, guid: 98073f7a31c67cf4282f9b2154bbb366, type: 2}
 --- !u!1 &1213879133
 GameObject:
   m_ObjectHideFlags: 0
