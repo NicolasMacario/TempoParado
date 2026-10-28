@@ -16,6 +16,7 @@ namespace TempoParado
         private float velocityY;
         private PlayerHealth health;
         private PlayerDodge dodge;
+        private PlayerCombat combat;
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
@@ -23,6 +24,7 @@ namespace TempoParado
             spawn = transform.position;
             health = GetComponent<PlayerHealth>();
             dodge = GetComponent<PlayerDodge>();
+            combat = GetComponent<PlayerCombat>();
             if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
         }
         private void Update()
@@ -37,11 +39,13 @@ namespace TempoParado
                 body.ignoreZones = true;
                 velocityY = 0f;
                 if (dodge != null) dodge.ResetState();
+                if (combat != null) combat.ResetState();
                 return;
             }
             if (health != null && health.IsDead)
             {
                 if (dodge != null) dodge.ResetState();
+                if (combat != null) combat.ResetState();
                 return;
             }
             float dt = body.DeltaTime;
@@ -54,13 +58,26 @@ namespace TempoParado
             }
             Vector3 displacement = move * speed * dt;
             Vector3 facing = move;
+            bool isDodging = false;
             if (dodge != null && dodge.isActiveAndEnabled)
             {
                 Vector3 dodgeMotion = dodge.Step(dt, move, LabInput.DodgePressed && controller.isGrounded);
                 if (dodge.IsDodging)
                 {
+                    isDodging = true;
                     displacement = dodgeMotion;
                     facing = dodge.FaceDirection ? dodge.Direction : Vector3.zero;
+                }
+            }
+            if (combat != null && combat.isActiveAndEnabled)
+            {
+                Vector3 aim = cameraTransform == null ? transform.forward :
+                    Quaternion.Euler(0f, cameraTransform.eulerAngles.y, 0f) * Vector3.forward;
+                combat.Step(dt, aim, LabInput.AttackPressed && controller.isGrounded, isDodging);
+                if (combat.IsAttacking && !isDodging)
+                {
+                    displacement *= Mathf.Clamp01(combat.movementMultiplier);
+                    facing = combat.LockedDirection;
                 }
             }
             if (dt <= 0f) return;

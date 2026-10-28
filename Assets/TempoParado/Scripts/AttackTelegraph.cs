@@ -10,6 +10,10 @@ namespace TempoParado
         private GameObject marker;
         private Mesh mesh;
         private Material runtimeMaterial;
+        public bool OwnsRenderer(Renderer renderer)
+        {
+            return marker != null && renderer != null && renderer.transform.IsChildOf(marker.transform);
+        }
         private void Awake()
         {
             EnemyChaser enemy = GetComponent<EnemyChaser>();

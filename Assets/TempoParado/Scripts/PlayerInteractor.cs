@@ -14,11 +14,13 @@ namespace TempoParado
         private float messageUntil;
         private PlayerHealth health;
         private PlayerDodge dodge;
+        private PlayerCombat combat;
         private void Awake()
         {
             body = GetComponent<TimeBody>();
             health = GetComponent<PlayerHealth>();
             dodge = GetComponent<PlayerDodge>();
+            combat = GetComponent<PlayerCombat>();
         }
         private void Update()
         {
@@ -38,6 +40,12 @@ namespace TempoParado
                 return;
             }
             nearby = HeldItem == null ? FindNearest() : null;
+            if (combat != null && combat.isActiveAndEnabled && combat.IsAttacking)
+            {
+                nearby = null;
+                if (LabInput.InteractPressed) ShowMessage("Aguarde o fim do ataque para pegar objetos.");
+                return;
+            }
             if (!LabInput.InteractPressed) return;
             if (body.LocalTimeScale <= 0f) { ShowMessage("Voce esta congelado. Pressione I para recuperar a protecao."); return; }
             if (HeldItem != null)

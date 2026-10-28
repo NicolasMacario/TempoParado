@@ -8,6 +8,19 @@ namespace TempoParado
     // Adaptador provisório: suporta os dois sistemas sem exigir trocar Player Settings.
     public static class LabInput
     {
+        public static bool AttackPressed
+        {
+            get
+            {
+#if ENABLE_INPUT_SYSTEM
+                return Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
+#elif ENABLE_LEGACY_INPUT_MANAGER
+                return Input.GetMouseButtonDown(0);
+#else
+                return false;
+#endif
+            }
+        }
         public static bool DodgePressed
         {
             get

@@ -34,6 +34,8 @@ namespace TempoParado
         private float phaseTimer;
         private PlayerHealth targetHealth;
         private AttackTelegraph telegraph;
+        private EnemyHealth enemyHealth;
+        private float hitReactionRemaining;
 
         private void Awake()
         {
@@ -43,6 +45,7 @@ namespace TempoParado
             spawnRotation = transform.rotation;
             targetHealth = target == null ? null : target.GetComponent<PlayerHealth>();
             telegraph = GetComponent<AttackTelegraph>();
+            enemyHealth = GetComponent<EnemyHealth>();
         }
         private void Update()
         {
@@ -53,11 +56,13 @@ namespace TempoParado
                 controller.enabled = true;
                 velocityY = 0f;
                 alerted = false;
+                hitReactionRemaining = 0f;
                 CancelAttack();
                 LastAttackLabel = "Nenhum golpe ainda";
                 StateLabel = "Vigiando";
                 return;
             }
+            if (enemyHealth != null && enemyHealth.IsDead) { Defeat(); return; }
             if (target == null) { StateLabel = "Sem alvo"; return; }
             if (targetHealth != null && targetHealth.IsDead)
             {
@@ -68,6 +73,13 @@ namespace TempoParado
             }
             float dt = body.DeltaTime;
             if (dt <= 0f) { StateLabel = "Congelado"; return; }
+            if (hitReactionRemaining > 0f)
+            {
+                hitReactionRemaining = Mathf.Max(0f, hitReactionRemaining - dt);
+                StateLabel = "Reagindo ao golpe";
+                Move(Vector3.zero, 0f, dt);
+                return;
+            }
             if (phase != Phase.Approach)
             {
                 TickAttack(dt);
@@ -167,6 +179,20 @@ namespace TempoParado
             if (controller.isGrounded && velocityY < 0f) velocityY = -2f;
             velocityY = Mathf.Max(velocityY - 20f * dt, -30f);
             controller.Move(direction * horizontalStep + Vector3.up * velocityY * dt);
+        }
+        public void ReactToHit(float duration)
+        {
+            // Golpes preparados continuam: nao e possivel impedir todo ataque apenas clicando.
+            if (phase == Phase.Windup || phase == Phase.Impact) return;
+            hitReactionRemaining = Mathf.Max(hitReactionRemaining, Mathf.Max(0f, duration));
+        }
+        public void Defeat()
+        {
+            CancelAttack();
+            alerted = false;
+            hitReactionRemaining = 0f;
+            StateLabel = "Derrotado";
+            if (controller != null) controller.enabled = false;
         }
         private void CancelAttack()
         {
