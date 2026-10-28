@@ -69,7 +69,8 @@ namespace TempoParado
                 Quaternion heading = Quaternion.Euler(0f, cameraTransform.eulerAngles.y, 0f);
                 move = heading * move;
             }
-            Vector3 displacement = move * speed * dt;
+            float conditionSpeed = strain == null ? 1f : strain.MovementMultiplier;
+            Vector3 displacement = move * speed * conditionSpeed * dt;
             Vector3 facing = move;
             bool isDodging = false;
             if (dodge != null && dodge.isActiveAndEnabled)

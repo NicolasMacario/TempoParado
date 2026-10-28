@@ -8,6 +8,8 @@ namespace TempoParado.Editor
     public static class StrainLabBuilder
     {
         [MenuItem("Tempo Parado/Ativar desgaste temporal")]
+        [MenuItem("Tempo Parado/Ativar buffs e debuffs das zonas")]
+        [MenuItem("Tempo Parado/Ativar condicao temporal")]
         public static void EnableStrain()
         {
             if (Application.isPlaying) { Debug.LogWarning("Saia do Play antes de ativar o desgaste."); return; }
@@ -23,7 +25,7 @@ namespace TempoParado.Editor
             if (player.GetComponent<TemporalStrain>() == null) Undo.AddComponent<TemporalStrain>(player.gameObject);
             EditorSceneManager.MarkSceneDirty(scene);
             Selection.activeGameObject = player.gameObject;
-            Debug.Log("Desgaste ativado. Salve com Ctrl+S e teste nos pisos azul, laranja e verde.");
+            Debug.Log("Condicao temporal ativada. A barra determina os efeitos, e a vida suprimida retorna com a recuperacao. Salve com Ctrl+S.");
         }
     }
 }

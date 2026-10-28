@@ -60,7 +60,8 @@ namespace TempoParado
                 Direction = new Vector3(Direction.x, 0f, Direction.z).normalized;
                 currentDuration = Mathf.Max(0.05f, duration);
                 currentInvulnerability = Mathf.Clamp(invulnerableDuration, 0f, currentDuration);
-                currentSpeed = Mathf.Max(0.1f, distance) / currentDuration;
+                float conditionDistance = strain == null ? 1f : strain.DodgeDistanceMultiplier;
+                currentSpeed = Mathf.Max(0.1f, distance) * conditionDistance / currentDuration;
                 remaining = currentDuration;
                 elapsed = 0f;
                 // O intervalo conta desde o inicio, mas nao permite sobrepor esquivas.

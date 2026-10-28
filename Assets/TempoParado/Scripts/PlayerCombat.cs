@@ -23,6 +23,7 @@ namespace TempoParado
         private float timer;
         private float phaseDuration;
         private bool hitApplied;
+        private float currentAttackSpeed = 1f;
         private Quaternion restRotation = Quaternion.identity;
         private bool initialized;
         private PlayerInteractor interactor;
@@ -63,13 +64,15 @@ namespace TempoParado
                 LockedDirection = aimDirection.sqrMagnitude > 0.001f ? aimDirection.normalized : transform.forward;
                 transform.rotation = Quaternion.LookRotation(LockedDirection);
                 phase = Phase.Windup;
+                // Capturado no inicio: atravessar a borda nao altera um golpe em andamento.
+                currentAttackSpeed = strain == null ? 1f : strain.AttackSpeedMultiplier;
                 phaseDuration = timer = Mathf.Max(0.05f, windupDuration);
                 hitApplied = false;
                 LastResult = "Preparando ataque";
                 AnimateWeapon();
                 return;
             }
-            timer = Mathf.Max(0f, timer - dt);
+            timer = Mathf.Max(0f, timer - dt * currentAttackSpeed);
             if (phase == Phase.Windup && timer <= 0f)
             {
                 phase = Phase.Impact;
