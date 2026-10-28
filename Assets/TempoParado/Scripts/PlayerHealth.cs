@@ -8,10 +8,12 @@ namespace TempoParado
         [Min(0.1f)] public float restartDelay = 2f;
         public int CurrentHealth { get; private set; }
         public bool IsDead => CurrentHealth <= 0;
+        public bool IsInvulnerable => dodge != null && dodge.isActiveAndEnabled && dodge.IsInvulnerable;
+        private PlayerDodge dodge;
         private float flashUntil;
         private float restartAt;
         private bool restartQueued;
-        private void Awake() { Restore(); }
+        private void Awake() { dodge = GetComponent<PlayerDodge>(); Restore(); }
         private void Update()
         {
             if (LabReset.Requested) { Restore(); return; }
@@ -23,7 +25,7 @@ namespace TempoParado
         }
         public bool TakeDamage(int amount)
         {
-            if (IsDead || amount <= 0 || LabReset.Requested) return false;
+            if (IsDead || amount <= 0 || LabReset.Requested || IsInvulnerable) return false;
             CurrentHealth = Mathf.Max(0, CurrentHealth - amount);
             flashUntil = Time.unscaledTime + 0.18f;
             if (IsDead) restartAt = Time.unscaledTime + Mathf.Max(0.1f, restartDelay);

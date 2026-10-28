@@ -13,7 +13,13 @@ namespace TempoParado
         private string message;
         private float messageUntil;
         private PlayerHealth health;
-        private void Awake() { body = GetComponent<TimeBody>(); health = GetComponent<PlayerHealth>(); }
+        private PlayerDodge dodge;
+        private void Awake()
+        {
+            body = GetComponent<TimeBody>();
+            health = GetComponent<PlayerHealth>();
+            dodge = GetComponent<PlayerDodge>();
+        }
         private void Update()
         {
             if (LabReset.Requested)
@@ -25,6 +31,12 @@ namespace TempoParado
                 return;
             }
             if (health != null && health.IsDead) { nearby = null; return; }
+            if (dodge != null && dodge.isActiveAndEnabled && dodge.IsDodging)
+            {
+                nearby = null;
+                if (LabInput.InteractPressed) ShowMessage("Aguarde o fim da esquiva para pegar ou soltar objetos.");
+                return;
+            }
             nearby = HeldItem == null ? FindNearest() : null;
             if (!LabInput.InteractPressed) return;
             if (body.LocalTimeScale <= 0f) { ShowMessage("Voce esta congelado. Pressione I para recuperar a protecao."); return; }

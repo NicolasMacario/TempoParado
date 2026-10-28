@@ -8,6 +8,19 @@ namespace TempoParado
     // Adaptador provisório: suporta os dois sistemas sem exigir trocar Player Settings.
     public static class LabInput
     {
+        public static bool DodgePressed
+        {
+            get
+            {
+#if ENABLE_INPUT_SYSTEM
+                return Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+#elif ENABLE_LEGACY_INPUT_MANAGER
+                return Input.GetKeyDown(KeyCode.Space);
+#else
+                return false;
+#endif
+            }
+        }
         public static bool InteractPressed
         {
             get

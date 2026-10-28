@@ -147,7 +147,8 @@ namespace TempoParado
                 return;
             }
             if (!HasClearHitPath()) { LastAttackLabel = "Bloqueado por obstaculo"; return; }
-            LastAttackLabel = targetHealth.TakeDamage(attackDamage) ? "Acertou: -" + attackDamage + " de vida" : "Sem dano";
+            LastAttackLabel = targetHealth.TakeDamage(attackDamage) ? "Acertou: -" + attackDamage + " de vida" :
+                targetHealth.IsInvulnerable ? "Esquiva: sem dano" : "Sem dano";
         }
         private bool HasClearHitPath()
         {
