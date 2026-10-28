@@ -1745,6 +1745,7 @@ GameObject:
   - component: {fileID: 1110657270}
   - component: {fileID: 1110657271}
   - component: {fileID: 1110657272}
+  - component: {fileID: 1110657273}
   m_Layer: 0
   m_Name: Jogador
   m_TagString: Untagged
@@ -1935,12 +1936,26 @@ MonoBehaviour:
   normalRecoveryRate: 0.12
   collapseDuration: 2
   postCollapseMagnitude: 0.4
-  slowDamageTaken: {x: 0.9, y: 0.8, z: 0.65}
-  slowAttackSpeed: {x: 1, y: 0.85, z: 0.65}
-  slowDodgeDistance: {x: 1, y: 0.85, z: 0.65}
-  fastMovement: {x: 1.1, y: 1.2, z: 1.35}
-  fastAttackSpeed: {x: 1.1, y: 1.2, z: 1.35}
+  slowDamageTaken: {x: 0.8, y: 0.65, z: 0.5}
+  slowAttackSpeed: {x: 1, y: 0.7, z: 0.45}
+  slowDodgeDistance: {x: 1, y: 0.7, z: 0.45}
+  fastMovement: {x: 1.2, y: 1.45, z: 1.75}
+  fastAttackSpeed: {x: 1.2, y: 1.45, z: 1.75}
   fastMaxHealth: {x: 1, y: 0.9, z: 0.75}
+--- !u!114 &1110657273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1110657261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1598b641daa74542b2618b1a1deaec83, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TempoParado.WoodenBird
+  healingFraction: 0.4
+  initialAreaId: TimeLab
 --- !u!1 &1213879133
 GameObject:
   m_ObjectHideFlags: 0

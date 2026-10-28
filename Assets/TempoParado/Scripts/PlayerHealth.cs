@@ -45,6 +45,16 @@ namespace TempoParado
             if (IsDead) restartAt = Time.unscaledTime + Mathf.Max(0.1f, restartDelay);
             return true;
         }
+        public int HealFractionOfMax(float fraction)
+        {
+            if (!Application.isPlaying || IsDead || LabReset.Requested || float.IsNaN(fraction) || fraction <= 0f) return 0;
+            // Primeiro devolve a vida suprimida pelo teto, depois aplica a cura real.
+            SyncTemporalHealth();
+            int before = CurrentHealth;
+            int healing = Mathf.RoundToInt(EffectiveMaxHealth * Mathf.Clamp01(fraction));
+            CurrentHealth = Mathf.Min(EffectiveMaxHealth, CurrentHealth + healing);
+            return CurrentHealth - before;
+        }
         private void Restore()
         {
             CurrentHealth = Mathf.Max(1, maxHealth);
