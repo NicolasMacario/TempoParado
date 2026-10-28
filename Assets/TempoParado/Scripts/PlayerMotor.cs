@@ -12,25 +12,29 @@ namespace TempoParado
         private TimeBody body;
         private Vector3 spawn;
         private float velocityY;
+        private PlayerHealth health;
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
             body = GetComponent<TimeBody>();
             spawn = transform.position;
+            health = GetComponent<PlayerHealth>();
             if (cameraTransform == null && Camera.main != null) cameraTransform = Camera.main.transform;
         }
         private void Update()
         {
             // Comandos de depuracao continuam funcionando quando o corpo congela.
             if (LabInput.ToggleProtection) body.ignoreZones = !body.ignoreZones;
-            if (LabInput.ResetPressed)
+            if (LabReset.Requested)
             {
                 controller.enabled = false;
                 transform.position = spawn;
                 controller.enabled = true;
                 body.ignoreZones = true;
                 velocityY = 0f;
+                return;
             }
+            if (health != null && health.IsDead) return;
             float dt = body.DeltaTime;
             if (dt <= 0f) return;
             Vector2 input = LabInput.Move;

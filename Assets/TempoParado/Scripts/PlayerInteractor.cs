@@ -12,10 +12,11 @@ namespace TempoParado
         private TemporalPickup nearby;
         private string message;
         private float messageUntil;
-        private void Awake() { body = GetComponent<TimeBody>(); }
+        private PlayerHealth health;
+        private void Awake() { body = GetComponent<TimeBody>(); health = GetComponent<PlayerHealth>(); }
         private void Update()
         {
-            if (LabInput.ResetPressed)
+            if (LabReset.Requested)
             {
                 foreach (TemporalPickup item in TemporalPickup.Active)
                     if (item != null) item.ResetToSpawn();
@@ -23,6 +24,7 @@ namespace TempoParado
                 messageUntil = 0f;
                 return;
             }
+            if (health != null && health.IsDead) { nearby = null; return; }
             nearby = HeldItem == null ? FindNearest() : null;
             if (!LabInput.InteractPressed) return;
             if (body.LocalTimeScale <= 0f) { ShowMessage("Voce esta congelado. Pressione I para recuperar a protecao."); return; }
@@ -81,6 +83,7 @@ namespace TempoParado
         }
         private void OnGUI()
         {
+            if (health != null && health.IsDead) return;
             string text;
             if (Time.unscaledTime < messageUntil) text = message;
             else if (HeldItem != null) text = "E: soltar " + HeldItem.displayName + " | Ritmo do objeto: " + HeldItem.Body.LocalTimeScale.ToString("0.0") + "x";
