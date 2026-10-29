@@ -101,7 +101,7 @@ namespace TempoParado
         private void OnGUI()
         {
             if (health == null || health.IsDead) return;
-            GUI.Box(new Rect(12f, 438f, 330f, 32f), "ESQUIVAS PERFEITAS: " + SuccessCount);
+            if (GameHUD.ShowDebug) GUI.Box(new Rect(12f, 438f, 330f, 32f), "ESQUIVAS PERFEITAS: " + SuccessCount);
             if (Time.unscaledTime >= notificationUntil) return;
             float width = Mathf.Min(420f, Screen.width - 24f);
             GUI.Box(new Rect((Screen.width - width) * 0.5f, Screen.height * 0.22f, width, 60f),

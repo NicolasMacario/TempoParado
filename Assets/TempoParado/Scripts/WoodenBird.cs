@@ -17,6 +17,7 @@ namespace TempoParado
         private PlayerHealth health;
         private string message;
         private float messageUntil;
+        public string ActiveMessage => Time.unscaledTime < messageUntil ? message : null;
 
         private void Awake()
         {
@@ -75,6 +76,7 @@ namespace TempoParado
         }
         private void OnGUI()
         {
+            if (!GameHUD.ShowDebug) return;
             if (health == null || health.IsDead) return;
             float width = Mathf.Min(400f, Screen.width - 24f);
             float x = (Screen.width - width) * 0.5f;

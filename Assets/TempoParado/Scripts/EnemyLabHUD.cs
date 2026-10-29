@@ -16,6 +16,7 @@ namespace TempoParado
         }
         private void OnGUI()
         {
+            if (!GameHUD.ShowDebug) return;
             if (enemy == null) return;
             float width = Mathf.Min(310f, Screen.width - 24f);
             float x = Mathf.Max(12f, Screen.width - width - 12f);

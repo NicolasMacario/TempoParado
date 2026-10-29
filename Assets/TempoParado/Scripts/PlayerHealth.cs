@@ -87,10 +87,13 @@ namespace TempoParado
         private void OnGUI()
         {
             Color original = GUI.color;
-            GUI.Box(new Rect(12f, 214f, 300f, 58f), "VIDA: " + CurrentHealth + " / " + EffectiveMaxHealth);
-            GUI.color = new Color(0.15f, 0.8f, 0.35f);
-            GUI.DrawTexture(new Rect(24f, 246f, 276f * CurrentHealth / EffectiveMaxHealth, 12f), Texture2D.whiteTexture);
-            GUI.color = original;
+            if (GameHUD.ShowDebug)
+            {
+                GUI.Box(new Rect(12f, 214f, 300f, 58f), "VIDA: " + CurrentHealth + " / " + EffectiveMaxHealth);
+                GUI.color = new Color(0.15f, 0.8f, 0.35f);
+                GUI.DrawTexture(new Rect(24f, 246f, 276f * CurrentHealth / EffectiveMaxHealth, 12f), Texture2D.whiteTexture);
+                GUI.color = original;
+            }
             if (Time.unscaledTime < flashUntil)
             {
                 GUI.color = new Color(1f, 0.1f, 0.1f, 0.65f);

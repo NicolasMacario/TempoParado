@@ -112,7 +112,7 @@ namespace TempoParado
         }
         public void ResetState() { Value = 0f; CollapseRemaining = 0f; collapseSide = 0f; }
         private void OnDisable() { ResetState(); }
-        private string StageLabel
+        public string StageLabel
         {
             get
             {
@@ -133,6 +133,16 @@ namespace TempoParado
         private void OnGUI()
         {
             if (health == null || health.IsDead || body == null) return;
+            if (GameHUD.ShowDebug) DrawDebugPanel();
+            if (IsCollapsed)
+            {
+                float overlayWidth = Mathf.Min(440f, Screen.width - 24f);
+                GUI.Box(new Rect((Screen.width - overlayWidth) * 0.5f, Screen.height * 0.36f, overlayWidth, 70f),
+                    "COLAPSO TEMPORAL\nAguarde " + CollapseRemaining.ToString("0.0") + "s | R: reiniciar\nVoce continua vulneravel aos ataques.");
+            }
+        }
+        private void DrawDebugPanel()
+        {
             float width = Mathf.Min(400f, Screen.width - 24f);
             float x = (Screen.width - width) * 0.5f;
             float y = Mathf.Max(12f, Screen.height - 304f);
@@ -181,12 +191,6 @@ namespace TempoParado
                  Mathf.Max(0.05f, combat.recoveryDuration)) / AttackSpeedMultiplier;
             GUI.Label(new Rect(left, y + 182f, barWidth, 30f),
                 "Proximo ataque ~" + attackDuration.ToString("0.00") + "s | Vida: " + health.CurrentHealth + "/" + health.EffectiveMaxHealth);
-            if (IsCollapsed)
-            {
-                float overlayWidth = Mathf.Min(440f, Screen.width - 24f);
-                GUI.Box(new Rect((Screen.width - overlayWidth) * 0.5f, Screen.height * 0.36f, overlayWidth, 70f),
-                    "COLAPSO TEMPORAL\nAguarde " + CollapseRemaining.ToString("0.0") + "s | R: reiniciar\nVoce continua vulneravel aos ataques.");
-            }
         }
     }
 }

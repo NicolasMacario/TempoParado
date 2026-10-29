@@ -187,6 +187,7 @@ namespace TempoParado
         }
         private void OnGUI()
         {
+            if (!GameHUD.ShowDebug) return;
             if (health == null || health.IsDead) return;
             string state = strain != null && strain.isActiveAndEnabled && strain.IsCollapsed ? "COLAPSO" :
                 CooldownRemaining > 0f ? "RECARGA: " + CooldownRemaining.ToString("0.0") + "s" : "PRONTO";

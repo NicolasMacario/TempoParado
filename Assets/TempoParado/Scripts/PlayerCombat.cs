@@ -154,6 +154,7 @@ namespace TempoParado
         private void OnDisable() { CancelAttack(); }
         private void OnGUI()
         {
+            if (!GameHUD.ShowDebug) return;
             if (health != null && health.IsDead) return;
             string state = strain != null && strain.isActiveAndEnabled && strain.IsCollapsed ? "COLAPSO" :
                 phase == Phase.Idle ? "PRONTO" : phase == Phase.Windup ? "PREPARANDO" : phase == Phase.Impact ? "GOLPE" : "RECUPERANDO";

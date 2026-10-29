@@ -109,8 +109,18 @@ namespace TempoParado
             if (HeldItem != null) HeldItem.ResetToSpawn();
             HeldItem = null;
         }
+        public string ActiveHint
+        {
+            get
+            {
+                if (Time.unscaledTime < messageUntil) return message;
+                if (HeldItem != null) return "E: soltar " + HeldItem.displayName;
+                return nearby == null ? null : "E: pegar " + nearby.displayName;
+            }
+        }
         private void OnGUI()
         {
+            if (!GameHUD.ShowDebug) return;
             if (health != null && health.IsDead) return;
             if (strain != null && strain.isActiveAndEnabled && strain.IsCollapsed) return;
             string text;

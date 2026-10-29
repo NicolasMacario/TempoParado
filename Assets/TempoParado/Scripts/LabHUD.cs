@@ -7,6 +7,7 @@ namespace TempoParado
         public TimeBody player;
         private void OnGUI()
         {
+            if (!GameHUD.ShowDebug) return;
             if (player == null) return;
             GUI.Box(new Rect(12, 12, 390, 190), "TEMPO PARADO | TimeLab - terceira pessoa");
             GUI.Label(new Rect(24, 40, 365, 25), "WASD / setas: mover | I: protecao | R: reiniciar");
