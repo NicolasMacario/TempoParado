@@ -13,6 +13,17 @@ namespace TempoParado
         private CharacterController controller;
         private TimeBody body;
         private Vector3 spawn;
+        private Quaternion spawnRotation;
+        private Vector3 checkpointPosition;
+        private Quaternion checkpointRotation;
+        public bool HasCheckpoint { get; private set; }
+        public void SetCheckpoint(Vector3 position, Quaternion rotation)
+        {
+            checkpointPosition = position;
+            checkpointRotation = rotation;
+            HasCheckpoint = true;
+        }
+        public void ClearCheckpoint() { HasCheckpoint = false; }
         private float velocityY;
         private PlayerHealth health;
         private PlayerDodge dodge;
@@ -23,6 +34,7 @@ namespace TempoParado
             controller = GetComponent<CharacterController>();
             body = GetComponent<TimeBody>();
             spawn = transform.position;
+            spawnRotation = transform.rotation;
             health = GetComponent<PlayerHealth>();
             dodge = GetComponent<PlayerDodge>();
             combat = GetComponent<PlayerCombat>();
@@ -35,8 +47,10 @@ namespace TempoParado
             if (LabInput.ToggleProtection) body.ignoreZones = !body.ignoreZones;
             if (LabReset.Requested)
             {
+                if (LabInput.ResetPressed) ClearCheckpoint();
                 controller.enabled = false;
-                transform.position = spawn;
+                transform.SetPositionAndRotation(HasCheckpoint ? checkpointPosition : spawn,
+                    HasCheckpoint ? checkpointRotation : spawnRotation);
                 controller.enabled = true;
                 body.ignoreZones = true;
                 velocityY = 0f;

@@ -12,6 +12,7 @@ namespace TempoParado
         public bool IsDead => CurrentHealth <= 0;
         public bool IsInvulnerable => dodge != null && dodge.isActiveAndEnabled && dodge.IsInvulnerable;
         private PlayerDodge dodge;
+        private PlayerMotor motor;
         private TemporalStrain strain;
         private float flashUntil;
         private float restartAt;
@@ -21,6 +22,7 @@ namespace TempoParado
         private void Awake()
         {
             dodge = GetComponent<PlayerDodge>();
+            motor = GetComponent<PlayerMotor>();
             strain = GetComponent<TemporalStrain>();
             Restore();
         }
@@ -106,9 +108,10 @@ namespace TempoParado
             if (IsDead)
             {
                 int seconds = Mathf.CeilToInt(Mathf.Max(0f, restartAt - Time.unscaledTime));
+                string restartLabel = motor != null && motor.HasCheckpoint ? "Voltando ao ponto de retomada em " : "Reiniciando o percurso em ";
                 float width = Mathf.Min(500f, Screen.width - 24f);
                 GUI.Box(new Rect((Screen.width - width) * 0.5f, Screen.height * 0.4f, width, 70f),
-                    "VOCE CAIU\nReiniciando o laboratorio em " + seconds + "s...\nR: reiniciar agora");
+                    "VOCE CAIU\n" + restartLabel + seconds + "s...\nR: reiniciar o percurso inteiro");
             }
         }
     }

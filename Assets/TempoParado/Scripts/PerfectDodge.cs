@@ -104,7 +104,7 @@ namespace TempoParado
             if (GameHUD.ShowDebug) GUI.Box(new Rect(12f, 438f, 330f, 32f), "ESQUIVAS PERFEITAS: " + SuccessCount);
             if (Time.unscaledTime >= notificationUntil) return;
             float width = Mathf.Min(420f, Screen.width - 24f);
-            GUI.Box(new Rect((Screen.width - width) * 0.5f, Screen.height * 0.22f, width, 60f),
+            GUI.Box(new Rect((Screen.width - width) * 0.5f, Screen.height * (GameHUD.ShowDebug ? 0.22f : 0.28f), width, 60f),
                 "ESQUIVA PERFEITA!\nZelador desacelerado por " + lastDuration.ToString("0.0") + "s");
         }
     }

@@ -23,6 +23,20 @@ namespace TempoParado
         public bool HasCombat => targetHealth != null && telegraph != null && telegraph.sourceMaterial != null;
         public float PhaseRemaining => phaseTimer;
         public float LocalScale => body == null ? 1f : body.LocalTimeScale;
+        public bool IsRecovering => phase == Phase.Recover;
+        public bool IsBossEncounter => boss != null && boss.isActiveAndEnabled;
+        public int BossPhase => IsBossEncounter && boss.IsSecondPhase ? 2 : 1;
+        public string AttackName { get; private set; } = "Golpe";
+        private ZeladorBoss boss;
+        private int patternCursor;
+        private int comboLength = 1;
+        private int comboIndex;
+        private float strikeRange;
+        private float strikeArc;
+        private int strikeDamage;
+        private float windupTotal;
+        private float followupWindup;
+        private float recoveryTotal;
         private CharacterController controller;
         private TimeBody body;
         private Vector3 spawn;
@@ -50,6 +64,7 @@ namespace TempoParado
             enemyHealth = GetComponent<EnemyHealth>();
             targetDodge = target == null ? null : target.GetComponent<PlayerDodge>();
             targetPerfectDodge = target == null ? null : target.GetComponent<PerfectDodge>();
+            boss = GetComponent<ZeladorBoss>();
         }
         private void Update()
         {
@@ -61,6 +76,7 @@ namespace TempoParado
                 velocityY = 0f;
                 alerted = false;
                 hitReactionRemaining = 0f;
+                patternCursor = 0;
                 CancelAttack();
                 LastAttackLabel = "Nenhum golpe ainda";
                 StateLabel = "Vigiando";
@@ -99,11 +115,7 @@ namespace TempoParado
             if (!alerted) StateLabel = "Vigiando";
             else if (HasCombat && distance <= attackRange && HasClearHitPath())
             {
-                if (offset.sqrMagnitude > 0.001f) transform.rotation = Quaternion.LookRotation(offset);
-                phase = Phase.Windup;
-                phaseTimer = Mathf.Max(0.05f, windupDuration);
-                StateLabel = "Preparando golpe";
-                telegraph.Show(0f);
+                BeginAttack();
             }
             else if (distance <= stopDistance) StateLabel = HasCombat ? "Golpe bloqueado" : "Ao alcance (ative combate)";
             else
@@ -114,17 +126,78 @@ namespace TempoParado
                     Quaternion.LookRotation(direction), turnSpeed * dt);
             }
             // O deslocamento respeita o relogio local e evita ultrapassar o alvo.
+            float chaseSpeed = IsBossEncounter ? (boss.IsSecondPhase ? boss.secondPhaseSpeed : boss.movementSpeed) : speed;
             float horizontalStep = direction == Vector3.zero ? 0f :
-                Mathf.Min(speed * dt, Mathf.Max(0f, distance - stopDistance));
+                Mathf.Min(chaseSpeed * dt, Mathf.Max(0f, distance - stopDistance));
             Move(direction, horizontalStep, dt);
+        }
+        private string AttackProgress => comboLength > 1 ? AttackName + " " + (comboIndex + 1) + "/" + comboLength : AttackName;
+        private void BeginAttack()
+        {
+            strikeRange = attackRange;
+            strikeArc = attackArc;
+            strikeDamage = attackDamage;
+            recoveryTotal = recoveryDuration;
+            comboLength = 1;
+            comboIndex = 0;
+            float preparation = windupDuration;
+            AttackName = "Golpe";
+            if (IsBossEncounter)
+            {
+                float pace = boss.IsSecondPhase ? Mathf.Clamp(boss.secondPhaseWindupMultiplier, 0.5f, 1f) : 1f;
+                int pattern = patternCursor % 3;
+                patternCursor = (patternCursor + 1) % 3;
+                if (pattern == 0)
+                {
+                    AttackName = "Varredura";
+                    strikeRange = 3.1f; strikeArc = 150f; strikeDamage = boss.sweepDamage;
+                    preparation = boss.sweepWindup * pace;
+                    recoveryTotal = 1.2f;
+                }
+                else if (pattern == 1)
+                {
+                    AttackName = "Sequencia";
+                    strikeRange = 3f; strikeArc = 110f; strikeDamage = boss.comboDamage;
+                    comboLength = boss.IsSecondPhase ? 3 : 2;
+                    preparation = boss.comboFirstWindup * pace;
+                    followupWindup = boss.comboNextWindup * pace;
+                    recoveryTotal = 1.5f;
+                }
+                else
+                {
+                    AttackName = "Impacto circular";
+                    strikeRange = 4f; strikeArc = 360f; strikeDamage = boss.slamDamage;
+                    preparation = boss.slamWindup * pace;
+                    recoveryTotal = 1.9f;
+                }
+            }
+            BeginWindup(preparation);
+        }
+        private void FaceTarget()
+        {
+            Vector3 direction = target.position - transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 0.001f) transform.rotation = Quaternion.LookRotation(direction);
+        }
+        private void BeginWindup(float duration)
+        {
+            FaceTarget();
+            phase = Phase.Windup;
+            windupTotal = phaseTimer = Mathf.Max(0.05f, duration);
+            StateLabel = "Preparando " + AttackProgress;
+            telegraph.SetArea(strikeRange, strikeArc);
+            telegraph.Show(0f);
         }
         private void TickAttack(float dt)
         {
-            StateLabel = phase == Phase.Windup ? "Preparando golpe" : phase == Phase.Impact ? "Golpe" : "Recuperando";
+            StateLabel = phase == Phase.Windup ? "Preparando " + AttackProgress : phase == Phase.Impact ? "Golpe" :
+                IsBossEncounter ? "EXPOSTO: ataque agora" : "Recuperando";
+            if (phase == Phase.Windup && IsBossEncounter &&
+                phaseTimer > windupTotal * (1f - Mathf.Clamp01(boss.trackingFraction))) FaceTarget();
             phaseTimer = Mathf.Max(0f, phaseTimer - dt);
             if (phase == Phase.Windup)
             {
-                telegraph.Show(1f - phaseTimer / Mathf.Max(0.05f, windupDuration));
+                telegraph.Show(1f - phaseTimer / windupTotal);
                 if (phaseTimer > 0f) return;
                 TryHit(); // Um unico teste de dano por golpe, no fim da preparacao.
                 phase = Phase.Impact;
@@ -134,9 +207,15 @@ namespace TempoParado
             }
             else if (phase == Phase.Impact && phaseTimer <= 0f)
             {
+                if (comboIndex + 1 < comboLength)
+                {
+                    comboIndex++;
+                    BeginWindup(followupWindup);
+                    return;
+                }
                 phase = Phase.Recover;
-                phaseTimer = Mathf.Max(0.05f, recoveryDuration);
-                StateLabel = "Recuperando";
+                phaseTimer = Mathf.Max(0.05f, recoveryTotal);
+                StateLabel = IsBossEncounter ? "EXPOSTO: ataque agora" : "Recuperando";
                 telegraph.Hide();
             }
             else if (phase == Phase.Recover && phaseTimer <= 0f)
@@ -158,12 +237,12 @@ namespace TempoParado
             float verticalDistance = Mathf.Abs(offset.y);
             offset.y = 0f;
             float distance = offset.magnitude;
-            if (distance > attackRange || verticalDistance > 1.5f)
+            if (distance > strikeRange || verticalDistance > 1.5f)
             {
                 LastAttackLabel = "Errou: fora do alcance";
                 return;
             }
-            float minimumDot = Mathf.Cos(attackArc * 0.5f * Mathf.Deg2Rad);
+            float minimumDot = Mathf.Cos(strikeArc * 0.5f * Mathf.Deg2Rad);
             if (distance > 0.001f && Vector3.Dot(transform.forward, offset / distance) < minimumDot)
             {
                 LastAttackLabel = "Errou: saiu da area";
@@ -175,7 +254,8 @@ namespace TempoParado
                 LastAttackLabel = "Esquiva perfeita!";
                 return;
             }
-            LastAttackLabel = targetHealth.TakeDamage(attackDamage) ? "Acertou: -" + attackDamage + " de vida" :
+            int before = targetHealth.CurrentHealth;
+            LastAttackLabel = targetHealth.TakeDamage(strikeDamage) ? "Acertou: -" + (before - targetHealth.CurrentHealth) + " de vida" :
                 targetHealth.IsInvulnerable ? "Esquiva: sem dano" : "Sem dano";
         }
         private bool CanStrikePosition(Vector3 position)
@@ -184,9 +264,9 @@ namespace TempoParado
             if (Mathf.Abs(offset.y) > 1.5f) return false;
             offset.y = 0f;
             float distance = offset.magnitude;
-            if (distance > attackRange) return false;
+            if (distance > strikeRange) return false;
             if (distance > 0.001f && Vector3.Dot(transform.forward, offset / distance) <
-                Mathf.Cos(attackArc * 0.5f * Mathf.Deg2Rad)) return false;
+                Mathf.Cos(strikeArc * 0.5f * Mathf.Deg2Rad)) return false;
             return HasClearHitPath(position);
         }
         private bool HasClearHitPath() { return HasClearHitPath(target.position); }
@@ -210,6 +290,7 @@ namespace TempoParado
         }
         public void ReactToHit(float duration)
         {
+            if (IsBossEncounter) return; // Armadura impede travar o chefe com cliques repetidos.
             // Golpes preparados continuam: nao e possivel impedir todo ataque apenas clicando.
             if (phase == Phase.Windup || phase == Phase.Impact) return;
             hitReactionRemaining = Mathf.Max(hitReactionRemaining, Mathf.Max(0f, duration));
@@ -227,6 +308,9 @@ namespace TempoParado
         {
             phase = Phase.Approach;
             phaseTimer = 0f;
+            comboLength = 1;
+            comboIndex = 0;
+            AttackName = "Golpe";
             if (telegraph != null) telegraph.Hide();
         }
         private void OnDisable() { CancelAttack(); }

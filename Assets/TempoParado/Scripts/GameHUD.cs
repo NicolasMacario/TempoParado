@@ -70,10 +70,23 @@ namespace TempoParado
                 if (route != null && route.guardian != null && !route.guardian.IsDead &&
                     (route.guardian.transform.position - transform.position).sqrMagnitude < 196f)
                 {
-                    GUI.Box(new Rect(center - 120f, 76f, 240f, 38f), GUIContent.none);
-                    Label(new Rect(center - 108f, 77f, 216f, 22f), "ZELADOR");
-                    Bar(new Rect(center - 108f, 103f, 216f, 5f),
-                        (float)route.guardian.CurrentHealth / Mathf.Max(1, route.guardian.maxHealth), new Color(0.95f, 0.35f, 0.2f));
+                    EnemyChaser enemy = route.guardian.GetComponent<EnemyChaser>();
+                    if (enemy != null && enemy.IsBossEncounter)
+                    {
+                        GUI.Box(new Rect(center - 200f, 76f, 400f, 66f), GUIContent.none);
+                        Label(new Rect(center - 188f, 77f, 376f, 22f), "ZELADOR DO ORFANATO | FASE " + enemy.BossPhase);
+                        Bar(new Rect(center - 188f, 103f, 376f, 7f),
+                            (float)route.guardian.CurrentHealth / Mathf.Max(1, route.guardian.maxHealth), new Color(0.95f, 0.3f, 0.15f));
+                        Label(new Rect(center - 188f, 114f, 376f, 24f),
+                            enemy.IsRecovering ? "EXPOSTO: cause mais dano agora" : enemy.StateLabel + " | ARMADURA");
+                    }
+                    else
+                    {
+                        GUI.Box(new Rect(center - 120f, 76f, 240f, 38f), GUIContent.none);
+                        Label(new Rect(center - 108f, 77f, 216f, 22f), "ZELADOR");
+                        Bar(new Rect(center - 108f, 103f, 216f, 5f),
+                            (float)route.guardian.CurrentHealth / Mathf.Max(1, route.guardian.maxHealth), new Color(0.95f, 0.35f, 0.2f));
+                    }
                 }
 
                 GUI.Box(new Rect(width - 246f, 16f, 230f, 80f), GUIContent.none);

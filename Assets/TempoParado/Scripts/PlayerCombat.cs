@@ -98,6 +98,7 @@ namespace TempoParado
         {
             struck.Clear();
             int hits = 0;
+            int damageDealt = 0;
             bool defeated = false;
             foreach (Collider collider in Physics.OverlapSphere(transform.position, range, ~0, QueryTriggerInteraction.Ignore))
             {
@@ -112,9 +113,10 @@ namespace TempoParado
                 if (!HasClearPath(enemy.transform)) continue;
                 if (!enemy.TakeDamage(damage)) continue;
                 hits++;
+                damageDealt += enemy.LastDamageTaken;
                 defeated |= enemy.IsDead;
             }
-            LastResult = defeated ? "Zelador derrotado! R: repetir" : hits > 0 ? "Acertou: " + damage + " de dano" : "Golpe errou";
+            LastResult = defeated ? "Zelador derrotado! R: repetir" : hits > 0 ? "Acertou: " + damageDealt + " de dano" : "Golpe errou";
         }
         private bool HasClearPath(Transform enemy)
         {

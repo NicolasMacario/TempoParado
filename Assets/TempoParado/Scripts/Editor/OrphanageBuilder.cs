@@ -85,6 +85,8 @@ namespace TempoParado.Editor
             enemy.transform.SetPositionAndRotation(new Vector3(0f, 1f, 51f), Quaternion.Euler(0f, 180f, 0f));
             enemy.detectionRange = 10f;
             enemy.loseRange = 18f;
+            ZeladorBossLabBuilder.ConfigureBoss();
+            CombatFeedbackLabBuilder.EnableFeedback();
             GameObject gate = Cube(structure, "Portao bloqueado", new Vector3(0f, 1.75f, 60f), new Vector3(4f, 3.5f, 0.5f), wood);
             BoxCollider exit = Volume("Destino do percurso", new Vector3(0f, 3f, 64.5f), new Vector3(7f, 6f, 5f));
             OrphanageRoute route = new GameObject("Objetivo do percurso").AddComponent<OrphanageRoute>();
@@ -94,6 +96,7 @@ namespace TempoParado.Editor
             route.gateCollider = gate.GetComponent<Collider>();
             route.exitBounds = exit;
             GameHUDLabBuilder.EnableCleanHUD();
+            CheckpointLabBuilder.AddCheckpoint();
             string path = AssetDatabase.GenerateUniqueAssetPath(Root + "/Scenes/OrfanatoPrototipo.unity");
             if (!EditorSceneManager.SaveScene(scene, path)) { Debug.LogError("Nao foi possivel salvar o percurso."); return; }
             AssetDatabase.SaveAssets();
